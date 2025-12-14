@@ -1,9 +1,10 @@
-[submodule "FSGS"]
-	path = FSGS
-	url = git@github.com:DecaYale/FSGS_dev.git
-[submodule "dust3r"]
-	path = dust3r
-	url = git@github.com:DecaYale/dust3r_dev.git
-[submodule "gmflow"]
-	path = gmflow
+[submodule "thirdparty/gmflow"]
+	path = thirdparty/gmflow
 	url = https://github.com/haofeixu/gmflow.git
+[submodule "thirdparty/dust3r"]
+	path = thirdparty/dust3r
+	url = git@github.com:DecaYale/dust3r_dev.git
+[submodule "thirdparty/FSGS"]
+	path = thirdparty/FSGS
+	url = git@github.com:DecaYale/FSGS_dev.git
+	branch = dev

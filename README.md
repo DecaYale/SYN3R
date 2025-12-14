@@ -20,6 +20,17 @@
 </p>
 
 
+## Clone the Code
+
+```
+git clone https://github.com/DecaYale/SV2C_GS.git 
+
+cd SV2C_GS 
+git submodule update --init --recursive
+
+```
+
+
 ## Environmental Setups
 We provide install method based on Conda package and environment management:
 ```bash
