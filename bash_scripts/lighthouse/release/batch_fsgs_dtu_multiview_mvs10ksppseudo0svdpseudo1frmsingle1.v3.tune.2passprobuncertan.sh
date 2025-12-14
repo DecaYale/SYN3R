@@ -1,0 +1,121 @@
+# #1passProb 
+# # export PYTHONPATH="/home/yxumich/Projects/NVS_Solver/":$PYTHONPATH
+# # export PYTHONPATH="/home/yxumich/Projects/NVS_Solver/DNGaussian":$PYTHONPATH
+# export PYTHONPATH="/home/yxumich/Projects/NVS_Solver/":$PYTHONPATH
+# export PYTHONPATH="/home/yxumich/Projects/NVS_Solver/FSGS":$PYTHONPATH
+# # export PYTHONPATH="/home/yxumich/Projects/NVS_Solver2/":$PYTHONPATH
+# # export PYTHONPATH="/home/yxumich/Projects/NVS_Solver2/FSGS":$PYTHONPATH
+
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/FSGS":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/gmflow":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/dust3r":$PYTHONPATH
+##################DGS MODE#################
+########## GS ##########
+
+#dataset_root="/home/yxumich/durable/datasets/nerf_llff_data/"
+dataset_root="/home/yxumich/durable/datasets/DTU/dtu_colmap/"
+
+workspace=$1
+# export CUDA_VISIBLE_DEVICES=$3
+
+
+
+
+idx=0
+seq=("trex")
+# ("room" "fortress" "flower" "fortress" "room" "trex" "horns" "flower")  
+for seq_name in $(ls $dataset_root); do
+# for seq_name in "${seq[@]}"; do
+
+    echo "Processing $seq_name"
+    mkdir -p ${workspace}/${seq_name}
+    # cp -a ${pretrained_root}/${seq_name}/*.pt ${workspace}/${seq_name}/ # cp nvs files
+    cp -a $0 ${workspace}/${seq_name} # backup script
+
+    if [ -f "${workspace}/${seq_name}/refine_1_chkpnt10000.pth" ]; then
+        echo "skip existing ${workspace}/${seq_name}"
+        continue
+    fi
+
+    # GS_args="-s ${dataset_root}/${seq_name} --model_path ${workspace}/${seq_name} -r 8 --eval --n_sparse 3  --rand_pcd --iterations 10000 --lambda_dssim 0.2 
+    # GS_args="-s ${dataset_root}/${seq_name} --model_path ${workspace}/${seq_name} 
+    #         -r 8 --eval --n_sparse 3  --mvs_pcd --iterations 10000 --lambda_dssim 0.25 
+    #         --densify_grad_threshold 0.0008 --prune_threshold 0.01 --densify_until_iter 10000 --percent_dense 0.01 
+    #         --position_lr_init 0.0005 --position_lr_final 0.000005 --position_lr_max_steps 9500 --position_lr_start 500 
+    #         --split_opacity_thresh 0.1 --error_tolerance 0.01 
+    #         --scaling_lr 0.005 
+    #         --shape_pena 0.002 --opa_pena 0.001 --scale_pena 0
+    #         --near 10
+    #         --num_train_samples 3
+    #         --checkpoint_iterations 10000
+    #         "
+    GS_args="-s ${dataset_root}/${seq_name} --model_path ${workspace}/${seq_name}  --eval  --n_views 3 --sample_pseudo_interval 100000000000000000000 --sample_svd_pseudo_interval 1  
+        --num_train_samples 3 --images images --resolution 4 --lambda_dssim 0.5 
+        "
+    # python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v2.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProb" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_gs"  --dataset "dtu" $GS_args 
+    # python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v2.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProb" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_loop0_gs"  --dataset "dtu" $GS_args 
+    # python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v6.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertain" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_loop0_gs"  --dataset "dtu" $GS_args 
+    python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v6.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertain" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_loop0_gs"  --dataset "dtu" --refine_cycle_num 2 $GS_args  | tee ${workspace}/${seq_name}/log.txt 2>&1
+
+    idx=$((idx+1))
+
+    if [ $(($idx%1)) -eq 0 ]; then
+        wait
+    fi
+    # break 
+
+
+done
+# GS_args="-s ${dataset} --model_path ${workspace} -r 8 --eval --n_sparse 3  --rand_pcd --iterations 6000 --lambda_dssim 0.2 
+#   --densify_grad_threshold 0.0013 --prune_threshold 0.01 --densify_until_iter 6000 --percent_dense 0.01 
+#             --position_lr_init 0.016 --position_lr_final 0.00016 --position_lr_max_steps 5500 --position_lr_start 500 
+#             --split_opacity_thresh 0.1 --error_tolerance 0.00025 
+#             --scaling_lr 0.003 
+#             --shape_pena 0.002 --opa_pena 0.001 
+#             --near 10
+#             --num_train_samples 3
+#             --checkpoint_iterations 6000
+#             "
+GS_args="-s ${dataset} --model_path ${workspace} -r 8 --eval --n_sparse 3  --rand_pcd --iterations 10000 --lambda_dssim 0.2 
+  --densify_grad_threshold 0.0013 --prune_threshold 0.01 --densify_until_iter 10000 --percent_dense 0.01 
+            --position_lr_init 0.016 --position_lr_final 0.00016 --position_lr_max_steps 9500 --position_lr_start 500 
+            --split_opacity_thresh 0.1 --error_tolerance 0.00025 
+            --scaling_lr 0.003 
+            --shape_pena 0.002 --opa_pena 0.001 
+            --near 10
+            --num_train_samples 3
+            --checkpoint_iterations 10000
+            "
+
+########## NVS ##########
+###single image
+
+
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass2Latent" --interp_type "forward_warp" $GS_args
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass2Latent" --interp_type "backward_warp" --start_checkpoint /home/yxumich/Works2/PGSR/output/llff/room_nvs2.verify/chkpnt6000.pth $GS_args
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass" --interp_type "backward_warp" $GS_args #--start_checkpoint /home/yxumich/Works2/PGSR/output/llff/room_nvs2.verify/chkpnt6000.pth 
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass2Latent" --interp_type "backward_warp" $GS_args #--start_checkpoint /home/yxumich/Works2/PGSR/output/llff/room_nvs2.verify/chkpnt6000.pth 
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass2Latent" --interp_type "backward_warp" --pseudo_cam_sampling_rate 0.1 $GS_args #--start_checkpoint /home/yxumich/Works2/PGSR/output/llff/room_nvs2.verify/chkpnt6000.pth 
+# python scripts/GSNVS_solver_multiview_2pass2latent_dngs.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2Pass" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 $GS_args #--start_checkpoint /home/yxumich/Works2/PGSR/output/llff/room_nvs2.verify/chkpnt6000.pth 
+
+
+
+
+# # python train_llff.py  -s $dataset --model_path $workspace -r 8 --eval --n_sparse 3  --rand_pcd --iterations 6000 --lambda_dssim 0.2 \
+# python utils/trainer.py  -s $dataset --model_path $workspace -r 8 --eval --n_sparse 3  --rand_pcd --iterations 6000 --lambda_dssim 0.2 \
+#             --densify_grad_threshold 0.0013 --prune_threshold 0.01 --densify_until_iter 6000 --percent_dense 0.01 \
+#             --position_lr_init 0.016 --position_lr_final 0.00016 --position_lr_max_steps 5500 --position_lr_start 500 \
+#             --split_opacity_thresh 0.1 --error_tolerance 0.00025 \
+#             --scaling_lr 0.003 \
+#             --shape_pena 0.002 --opa_pena 0.001 \
+#             --near 10
+
+# set a larger "--error_tolerance" may get more smooth results in visualization
+
+            
+# python DNGaussian/render.py -s $dataset --model_path $workspace -r 8 --near 10  
+# python spiral.py -s $dataset --model_path $workspace -r 8 --near 10 
+
+
+# python DNGaussian/metrics.py --model_path $workspace 
