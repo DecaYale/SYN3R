@@ -1,5 +1,11 @@
 
-export PYTHONPATH="/home/yxumich/Projects/FSGS/":$PYTHONPATH
+# export PYTHONPATH="/home/yxumich/Projects/FSGS/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
+
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/FSGS":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/gmflow":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/dust3r":$PYTHONPATH
 
 
 dataset_root="/home/yxumich/Works2/DATASETS/DL3DV/test_split/"

@@ -15,9 +15,11 @@
 ---------------------------------------------------
 <p align="center" >
   <a href="https://youtu.be/7MpSvjz75XQ">
-    <img src="resource/youtube_thumb.png" alt="demo" width="85%">
+    <img src="https://img.youtube.com/vi/7MpSvjz75XQ/0.jpg" alt="demo" width="85%">
   </a>
+
 </p>
+  <!-- [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/7MpSvjz75XQ/0.jpg)](https://www.youtube.com/watch?v=7MpSvjz75XQ) -->
 
 
 ## Clone the Code

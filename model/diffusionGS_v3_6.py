@@ -125,7 +125,6 @@ class DiffusionGS:
         else:
             raise NotImplementedError
     
-        # self.diffusion_pipeline = self.diffusion_pipeline.from_pretrained("stabilityai/stable-video-diffusion-img2vid-xt", torch_dtype=torch.float16, variant="fp16")
 
     def get_GS_TrainCameras(self, ordered=False):
         '''

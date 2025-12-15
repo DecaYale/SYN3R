@@ -1,8 +1,9 @@
-
 export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/FSGS":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/gmflow":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/dust3r":$PYTHONPATH
+
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/FSGS":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/gmflow":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/dust3r":$PYTHONPATH
 ##################DGS MODE#################
 ########## GS ##########
 
