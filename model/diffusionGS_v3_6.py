@@ -1,7 +1,6 @@
 
 # support FSGS 
 #  using GS rendering to densify views
-#tmp
 #based on diffusionGS_v3_4
 # add view selection in view densification process 
 
@@ -25,12 +24,10 @@ import trimesh
 import open3d as o3d 
 
 
-# from PGSR.utils.trainer import init_GSTrainer, GSTrainer
-# from DNGaussian.utils.trainer import init_GSTrainer, GSTrainer
 from FSGS.utils.trainer import init_GSTrainer, GSTrainer
-# from model.SVD_2pass2latent import export_to_video
 from model.SVD_2pass import export_to_video
 from solver_utils.forward_warp import forward_warp, inverse_warp
+
 from FSGS.scene.cameras import Camera
 # from model.correspondence import MASt3RInference
 from functools import partial
@@ -237,20 +234,19 @@ class DiffusionGS:
                     gs_images = data['gs_renderings']
                 print("Load interpolated dense views from ", saving_path)
             else:
-                if densify_type == 'interpolate':
-                    diffused_frames, interpolated_poses = self._interpolate_between(i, (i+1)%self.num_input_views, replace=True)
-                elif densify_type == 'from_single':
+                # if densify_type == 'interpolate':
+                #     diffused_frames, interpolated_poses = self._interpolate_between(i, (i+1)%self.num_input_views, replace=True)
+                # elif densify_type == 'from_single':
                     
-                    diffused_frames, interpolated_poses = self._extrapolate_from(i, replace=True)
-                elif densify_type == 'from_single_gs':
-                    diffused_frames, interpolated_poses = self._extrapolate_from_gs(i, replace=True)
-                    pass
-                elif densify_type == 'interpolate_gs':
-                    diffused_frames, interpolated_poses = self._interpolate_between_gs(i, (i+1)%self.num_input_views, replace=True)
-                elif densify_type == 'interpolate_loop0_gs':
+                #     diffused_frames, interpolated_poses = self._extrapolate_from(i, replace=True)
+                # elif densify_type == 'from_single_gs':
+                #     diffused_frames, interpolated_poses = self._extrapolate_from_gs(i, replace=True)
+                #     pass
+                # elif densify_type == 'interpolate_gs':
+                #     diffused_frames, interpolated_poses = self._interpolate_between_gs(i, (i+1)%self.num_input_views, replace=True)
+                if densify_type == 'interpolate_loop0_gs':
                     if i==self.num_input_views-1:
                         break
-                    # diffused_frames, interpolated_poses = self._interpolate_between_gs(i, (i+1)%self.num_input_views, replace=True)
                     diffused_frames, interpolated_poses, gs_images = self._interpolate_between_gs_v3(i, (i+1)%self.num_input_views, replace=True, perturb_interp_poses=True )
                 elif densify_type == 'interpolate_gs_v2':
                     # diffused_frames, interpolated_poses, gs_images = self._interpolate_between_gs_v2(i, (i+1)%self.num_input_views, replace=True)
@@ -278,7 +274,6 @@ class DiffusionGS:
             dense_views.extend(diffused_frames[:-1])
             dense_poses.extend(interpolated_poses[:-1])  
             # assert num_views_for_pcd_densification>1
-            # key_frame_mask.extend([True] + [False] * (len(diffused_frames)-2)) # the first frame is the key frame
             key_inds = np.linspace(0, len(diffused_frames)-1, num_views_for_pcd_densification, dtype=int)
             key_inds = key_inds[:-1]
             template = np.zeros(len(diffused_frames)-1, dtype=bool)
@@ -292,32 +287,15 @@ class DiffusionGS:
                 key_frame_mask.append(True) # the last input frame is the key frame
 
 
-                # import pdb; pdb.set_trace() # only for debug
 
             assert len(dense_views) == len(dense_poses) == len(key_frame_mask) == len(input_flags)
 
-            if self.debug:
-                break # only for debug 
 
             # TODO:save dense views
             # torch.save( {'views':diffused_frames, 'poses':interpolated_poses, 'gs_renderings': gs_images}, saving_path, )
             torch.save( {'views':diffused_frames, 'poses':interpolated_poses}, saving_path, )
-            '''
-            os.makedirs(os.path.join(self.save_dir, 'dense_views'), exist_ok=True)
-            
-            # import pdb; pdb.set_trace()
-            gs_images = [ PIL.Image.fromarray( (np.clip(im,0,1)*255).astype(np.uint8) )  for im in gs_images]
-            diffused_frames = [ PIL.Image.fromarray( (im.permute([1,2,0]).cpu().numpy()*255).astype(np.uint8)).resize([self.gs_width, self.gs_height ]) for im in diffused_frames]
-            # PIL.Image.fromarray( (diffused_frames[0].permute([1,2,0]).cpu().numpy()*255).astype(np.uint8)).resize([self.gs_width, self.gs_height ])
-            corresp_masks = self.generate_corresp_mask(gs_images, diffused_frames )
-            for i, mask in enumerate(corresp_masks):
-                cv2.imwrite(os.path.join(self.save_dir, 'dense_views', f'corresp_mask_{i}.png'), mask.cpu().numpy()*255)
-            '''
 
         #densify point clouds
-        # trimesh_scene = self.densify_pcds(diffused_frames, interpolated_poses)
-        # trimesh_scene = self.densify_pcds(dense_views, dense_poses, key_frame_mask=key_frame_mask, win_samples=10)
-        # trimesh_scene = self.densify_pcds(dense_views, dense_poses, key_frame_mask=key_frame_mask, win_samples=-1)
         
         if num_views_for_pcd_densification > 1:
 
@@ -329,11 +307,8 @@ class DiffusionGS:
             # trimesh_scenes.add_geometry( trimesh_scene )    
 
             os.makedirs(os.path.join(self.save_dir, 'dense_views'), exist_ok=True)
-            # trimesh_scenes.export(os.path.join(self.save_dir, 'dense_views', f'dense_views_cyc{cycle_num}.obj'))
-            # dust3r_pcd = trimesh.load(os.path.join(self.save_dir, 'dense_views', f'dense_views_cyc{cycle_num}.obj') )
             dust3r_pcd = trimesh_scene.geometry['geometry_0']
 
-            # import pdb; pdb.set_trace()
             pcd = o3d.geometry.PointCloud()
             pcd.points = o3d.utility.Vector3dVector(dust3r_pcd.vertices)
             pcd.colors = o3d.utility.Vector3dVector(dust3r_pcd.colors[:, :3]/255.0)   
@@ -354,11 +329,7 @@ class DiffusionGS:
             # uni_down_pcd = pcd
 
             inlier_cloud = down_pcd.select_by_index(ind)
-            # inlier_cloud = uni_down_pcd 
-            # dense_pcds = inlier_cloud.voxel_down_sample(voxel_size=(dust3r_pcd.vertices.max(axis=0)- dust3r_pcd.vertices.min(axis=0)).max()/500  )
-            # dense_pcds = inlier_cloud.voxel_down_sample(voxel_size=(dust3r_pcd.vertices.max(axis=0)- dust3r_pcd.vertices.min(axis=0)).max()/1000  )
             dense_pcds = inlier_cloud 
-            # import pdb; pdb.set_trace()
 
             o3d.io.write_point_cloud(os.path.join(self.save_dir, 'dense_views', f'dense_views_cyc{cycle_num}.ply'), dense_pcds)
         else:
@@ -369,51 +340,6 @@ class DiffusionGS:
 
         return dense_views, dense_poses, dense_pcds#, corresp_masks 
 
-    # def densify_pcds(self, diffused_frames, interpolated_poses):
-    #     '''
-    #         interpolated_poses: the poses of the diffused frames, w2c 
-    #     '''
-
-    #     assert len(diffused_frames) == len(interpolated_poses) == 25
-    #     if isinstance(diffused_frames[0], torch.Tensor):
-    #         diffused_frames = [im.permute([1,2,0]).cpu().numpy() for im in diffused_frames]
-
-    #     num_frames = len(diffused_frames)
-    #     for i in range(1, len(diffused_frames)-1):
-    #         pose, image, depth, alpha = self.render_GS(pose=interpolated_poses[i], return_alpha=True) 
-
-    #         if i<num_frames//2:
-    #             ref_image = diffused_frames[0]
-    #         else:
-    #             ref_image = diffused_frames[-1]
-            
-    #         input_images_np = [ref_image*255, diffused_frames[i]*255]
-    #         scene, trimesh_scene = self.dust3r.run(input_images_np, c2w_poses=None, intrinsics=None)
-            
-    #         masks, flow_bwfw = self.gsTrainer.generate_corresp_mask(gs_renderings=[torch.from_numpy(image)], svd_outputs=[torch.from_numpy(diffused_frames[i].transpose([2,0,1]) ) ], dist_thresh=3, desc_only=False)
-    #         mask = masks[0][0].data.cpu().numpy()
-    #         import pdb; pdb.set_trace()
-            
-            
-
-    #         depth = scene.get_depthmaps()[-1]
-    #         conf = scene.im_conf[-1]/scene.im_conf[-1].max()
-
-    #         depth = cv2.resize(depth.data.cpu().numpy(), (self.gs_width, self.gs_height), interpolation=cv2.INTER_LINEAR)
-    #         conf = cv2.resize(conf.data.cpu().numpy(), (self.gs_width, self.gs_height), interpolation=cv2.INTER_LINEAR)
-            
-
-    #         # import pdb; pdb.set_trace()
-    #         save_img = np.concatenate([image.transpose([1,2,0])[:, :, ::-1] * 255,
-    #                                     diffused_frames[i][:,:,::-1] * 255,
-    #                                     np.tile( alpha[...,None] , [1,1,3])* 255,
-    #                                     np.tile( mask[...,None], [1,1,3])* 255, 
-    #                                     np.tile( depth[...,None] , [1,1,3])* 255,
-    #                                     np.tile( conf[...,None], [1,1,3])* 255
-    #                                     ], axis=1)
-    #         file_name = f'{i:06d}.jpg'
-    #         os.makedirs(os.path.join(self.gsTrainer.scene.model_path, 'render_debug3'), exist_ok=True)
-    #         cv2.imwrite(os.path.join(self.gsTrainer.scene.model_path, 'render_debug3' ,file_name.replace('.png', '.jpg')), save_img)
 
     def densify_pcds(self, diffused_frames, interpolated_poses, key_frame_mask=None, input_flags=None, win_samples=-1):
         '''
@@ -500,20 +426,7 @@ class DiffusionGS:
 
         scene, trimesh_scene = self.dust3r.run(filtered_diffused_frames, c2w_poses=filtered_interpolated_poses, intrinsics=filtered_intrinsics_list, preset_pairs=pairs_key_frames)
         self.dust3r.to('cpu')
-        # scene, trimesh_scene = self.dust3r.run(filtered_diffused_frames, c2w_poses=filtered_interpolated_poses, intrinsics=filtered_intrinsics_list, preset_pairs=pairs_key_frames+pairs_window)
-
          
-
-        # print("Filtered frames: ", len(filtered_diffused_frames), " out of ", len(diffused_frames))
-        # num_frames = len(filtered_diffused_frames)
-        # pairs_left = self.dust3r.make_pairs(filtered_diffused_frames[:num_frames//2], scene_graph='oneref-0')
-        # pairs_right = self.dust3r.make_pairs(filtered_diffused_frames[num_frames//2:], scene_graph=f'oneref-{len(filtered_diffused_frames[num_frames//2:])-1}', )
-        # pairs_right=[]
-        # pairs = pairs_left + pairs_right
-        # import pdb; pdb.set_trace()
-
-        # # scene, trimesh_scene = self.dust3r.run(filtered_diffused_frames, c2w_poses=filtered_interpolated_poses, intrinsics=filtered_intrinsics_list, preset_pairs=pairs)
-        # scene, trimesh_scene = self.dust3r.run(filtered_diffused_frames[:num_frames//2], c2w_poses=filtered_interpolated_poses[:num_frames//2], intrinsics=filtered_intrinsics_list[:num_frames//2], preset_pairs=pairs)
 
         return trimesh_scene
 
@@ -537,7 +450,6 @@ class DiffusionGS:
             mask[matches_im0[:,1], matches_im0[:,0]] = 1
 
             masks.append(mask)
-            # corresp_mask = self.gsTrainer.generate_correspondence_mask(diffused_frames, interpolated_poses, save_path=saving_path) 
             
         return masks
 
@@ -587,7 +499,6 @@ class DiffusionGS:
         save_path = os.path.join(self.save_dir, 'warp_images')
         os.makedirs(save_path, exist_ok=True)
 
-        # image_o,image_o2,masks, cond_image = self.warp_images(self.gs_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         if self.interp_type == 'forward_warp':
             image_o, image_o2, masks, cond_image = self.warp_images(self.diffusion_intrinsics, interpolated_poses, image_l=image1, image_r=None, depth_l=depth1, depth_r=None, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         elif self.interp_type == 'backward_warp':   
@@ -598,7 +509,7 @@ class DiffusionGS:
             raise NotImplementedError
         assert image_o2 is None # !
 
-        dists, min_indice = self.compute_dists(interpolated_poses, type='single_end') # TODO: bugs here. We may need to use cam to world transformation matrix
+        dists, min_indice = self.compute_dists(interpolated_poses, type='single_end') # TODO: We may need to use cam to world transformation matrix
 
         sigma_list = np.load('sigmas/sigmas_100.npy').tolist()
         lambda_ts = self.search_hypers(interpolated_poses,dists,sigma_list,save_path, type='single_end') # single end
@@ -688,15 +599,12 @@ class DiffusionGS:
         train_cams = self.get_TrainCameras().copy()
         pseudo_cams = self.gsTrainer.scene.getPseudoCameras().copy()
 
-        # import pdb; pdb.set_trace()
         if self.args.dataset == 'llff':
             self.gsTrainer.find_nearest_cam([train_cams[idx1]], pseudo_cams, multi_view_max_angle=30, multi_view_min_dis=0.01, multi_view_max_dis=1.5) # #TODO: hyperparameters need to be tuned
         elif self.args.dataset == 'dtu':
             self.gsTrainer.find_nearest_cam([train_cams[idx1]], pseudo_cams, multi_view_max_angle=15, multi_view_min_dis=0.01, multi_view_max_dis=0.5)
         else:
             raise NotImplementedError
-        # import pdb; pdb.set_trace()
-        # self.gsTrainer.find_nearest_cam([train_cams[idx1]], pseudo_cams, multi_view_max_angle=30, multi_view_min_dis=0.01, multi_view_max_dis=0.5)
 
         sampled_id = np.linspace(0, len(train_cams[idx1].nearest_id )-1, 24, dtype=int)
         nearest_pseudo_cams = [pseudo_cams[i] for i in sampled_id ] # maybe sub-sampling is needed
@@ -706,13 +614,12 @@ class DiffusionGS:
         interpolated_poses =  [cam.world_view_transform.transpose(0,1).cpu().numpy() for cam in nearest_pseudo_cams] # world to cam? transpose to make right multiplication->left multiplication -- 
         interpolated_poses = [pose1] + interpolated_poses
 
-        dists, min_indice = self.compute_dists(interpolated_poses, type='single_end') # TODO: bugs here. We may need to use cam to world transformation matrix
+        dists, min_indice = self.compute_dists(interpolated_poses, type='single_end') # TODO: We may need to use cam to world transformation matrix
 
         save_path = os.path.join(self.save_dir, 'warp_images')
         os.makedirs(save_path, exist_ok=True)
 
 
-        # image_o,image_o2,masks, cond_image = self.warp_images(self.gs_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         if self.interp_type == 'forward_warp':
             image_o, image_o2, masks, cond_image = self.warp_images(self.diffusion_intrinsics, interpolated_poses, image_l=image1, image_r=None, depth_l=depth1, depth_r=None, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         elif self.interp_type == 'backward_warp':   
@@ -729,7 +636,6 @@ class DiffusionGS:
         os.makedirs(output_path, exist_ok=True)
 
         diffused_frames = self.svd_render(image_o, image_o2, masks, cond_image, output_path, lambda_ts, num_frames=25, save_prefix=f'{idx1}_',  ) #NOTE:!!!!
-        # diffused_frames = svd_render(image_o2, image_o, masks.flip(dims=[0]), cond_image[::-1], output_path,lambda_ts.flip(dims=[1]), num_frames=num_frames) #NOTE:!!!!
 
         if replace:
             diffused_frames[0] = PIL.Image.fromarray( (image_o*255).astype(np.uint8) ) 
@@ -863,7 +769,6 @@ class DiffusionGS:
 
 
 
-    # def _interpolate_between_gs_v2(self, idx1, idx2, replace=True,):
     def _interpolate_between_gs_v3(self, idx1, idx2, replace=True, perturb_interp_poses=True):
         # set lamda_ts according to uncertainty masks 
         # replace the cond_image with pseudo_image if the uncertainty is high
@@ -904,7 +809,6 @@ class DiffusionGS:
         save_path = os.path.join(self.save_dir, 'warp_images')
         os.makedirs(save_path, exist_ok=True)
 
-        # image_o,image_o2,masks, cond_image = self.warp_images(self.gs_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         if self.interp_type == 'forward_warp':
             image_o, image_o2, masks, cond_image = self.warp_images(self.diffusion_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         elif self.interp_type == 'backward_warp':   
@@ -959,8 +863,6 @@ class DiffusionGS:
 
             cond_image = np.where(geo_inten_uncertainty>0.5, gs_images, np.stack(aux['cond_images_ori']) ) # maybe we can use optical flow to generate the target views by align gs image and input images 
             
-            # cond_image = np.where(geo_inten_uncertainty.mean(axis=(-1,-2, -3), keepdims=True)>0.5, gs_images, np.stack(aux['cond_images_ori'] ) )
-            # cond_image = np.where(geo_inten_uncertainty.mean(axis=(-1,-2, -3), keepdims=True)>0.5, gs_images, cond_image )
 
             # The below is for debugging
             nearby_uncertainty = 1 - (1-torch.stack(nearby_consistency_uncertainty[1:-1]))* (1-torch.stack(nearby_inten_consistency_uncertainty[1:-1]))
@@ -1009,7 +911,6 @@ class DiffusionGS:
         #for saving gpu memory
         self.gsTrainer.gaussians.to(device='cuda')
 
-        # diffused_frames = svd_render(image_o2, image_o, masks.flip(dims=[0]), cond_image[::-1], output_path,lambda_ts.flip(dims=[1]), num_frames=num_frames) #NOTE:!!!!
 
         if replace:
             diffused_frames[0] = PIL.Image.fromarray( (image_o*255).astype(np.uint8) ) 
@@ -1053,7 +954,6 @@ class DiffusionGS:
         save_path = os.path.join(self.save_dir, 'warp_images')
         os.makedirs(save_path, exist_ok=True)
 
-        # image_o,image_o2,masks, cond_image = self.warp_images(self.gs_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         if self.interp_type == 'forward_warp':
             image_o, image_o2, masks, cond_image = self.warp_images(self.diffusion_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         elif self.interp_type == 'backward_warp':   
@@ -1103,7 +1003,6 @@ class DiffusionGS:
             masks = np.stack(mask_buf)
             masks = torch.from_numpy(masks).float()
 
-            # cond_image = np.stack(aux['cond_images_ori'])
             cond_image = np.where(geo_inten_uncertainty>0.5, gs_images, np.stack(aux['cond_images_ori']) ) # maybe we can use optical flow to generate the target views by align gs image and input images 
 
 
@@ -1168,7 +1067,6 @@ class DiffusionGS:
         os.makedirs(save_path, exist_ok=True)
 
 
-        # image_o,image_o2,masks, cond_image = self.warp_images(self.gs_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         if self.interp_type == 'forward_warp':
             image_o, image_o2, masks, cond_image = self.warp_images(self.diffusion_intrinsics, interpolated_poses, image_l=image1, image_r=image2, depth_l=depth1, depth_r=depth2, save_path=save_path, save_file_name_prefix=f'{idx1}') 
         elif self.interp_type == 'backward_warp':   
@@ -1209,7 +1107,6 @@ class DiffusionGS:
         # pipe = self.diffusion_pipeline
         # pipe.to("cuda")
 
-        # cv2.imwrite(os.path.join(output_path, "image_r.png"), image_r*255)
 
         if self.densify_type in ['from_single', 'from_single_gs']:
             assert isinstance(cond_image, list)
@@ -1220,7 +1117,6 @@ class DiffusionGS:
 
             frames = pipe([image_l],temp_cond=cond_image+[image_r],mask = masks,lambda_ts=lambda_ts,num_frames=num_frames, decode_chunk_size=8, num_inference_steps=100, latent_num=self.latent_num).frames[0] 
 
-        # frames = pipe([image_l],temp_cond=cond_image+[image_r],mask = masks,lambda_ts=lambda_ts,num_frames=num_frames, decode_chunk_size=8,num_inference_steps=1).frames[0] 
    
         # output_path = save_path+'_out_dgs'
         if not os.path.exists(output_path):
@@ -1230,130 +1126,15 @@ class DiffusionGS:
 
         export_to_video(frames, os.path.join(output_path,"generated.mp4"), fps=7)
 
-        # pipe = StableVideoDiffusionPipeline.from_pretrained("stabilityai/stable-video-diffusion-img2vid-xt", torch_dtype=torch.float16, variant="fp16")
-        # pipe.to("cuda")
-
-        # # frames = pipe([image_o],temp_cond=cond_image,mask = masks,lambda_ts=lambda_ts,weight_clamp=weight_clamp,num_frames=25, decode_chunk_size=8,num_inference_steps=100).frames[0]
-        # frames = pipe([image_o],temp_cond=cond_image,mask = masks,lambda_ts=lambda_ts,weight_clamp=weight_clamp,num_frames=num_frames, decode_chunk_size=8,num_inference_steps=100).frames[0]
-        # # frames = pipe([image_o],temp_cond=cond_image,mask = masks,lambda_ts=lambda_ts,weight_clamp=weight_clamp,num_frames=num_frames, decode_chunk_size=8,num_inference_steps=10).frames[0]
-
-        # if not os.path.exists(output_path):
-        #     os.makedirs(output_path)
-        # for i,fr in enumerate(frames):
-        #     fr.save(os.path.join(output_path, f"{i:06d}.png"))
-        # export_to_video(frames, os.path.join(output_path,"generated.mp4"), fps=7)
         pipe.to("cpu")
 
 
         return frames
 
 
-    def search_hypers(self, pose,dists,sigmas,save_path, type='double_end'):
-
-        assert type in ['double_end', 'single_end']
-
-        sigmas = sigmas[:-1]
-        sigmas_max = max(sigmas)
-
-        v2_list = np.arange(50, 1001, 50)
-        v3_list = np.arange(10, 101, 10)
-        v1_list = np.linspace(0.001, 0.009, 9)
-        zero_count_default = 0
-
-        if type == 'double_end':
-            index_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
-        elif type == 'single_end':
-            index_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
-        else:
-            raise NotImplementedError
-
-
-        for v1 in v1_list:
-            for v2 in v2_list:
-                for v3 in v3_list:
-                    flag = True
-                    lambda_t_list = []
-                    for sigma in sigmas:
-                        sigma_n = sigma/sigmas_max
-                        temp_cond_indices = [0]
-                        for tau in range(25):
-                            if tau not in index_list:
-                                lambda_t_list.append(1)
-                            else:
-                                dist_t = dists[tau]
-                                Q = v3 * abs((dist_t)) - v2*sigma_n
-                                k = 0.8
-                                b = -0.2
-
-                                lambda_t_1 = (-(2*v1 + k*Q) + ((2*k*v1+k*Q)**2 - 4*k*v1*(k*v1+Q*b))**0.5)/(2*k*v1)
-                                lambda_t_2 = (-(2*v1 + k*Q) - ((2*k*v1+k*Q)**2 - 4*k*v1*(k*v1+Q*b))**0.5)/(2*k*v1)
-                                v1_ = -v1
-                                lambda_t_3 = (-(2*v1_ + k*Q) + ((2*k*v1_+k*Q)**2 - 4*k*v1_*(k*v1_+Q*b))**0.5)/(2*k*v1_)
-                                lambda_t_4 = (-(2*v1_ + k*Q) - ((2*k*v1_+k*Q)**2 - 4*k*v1_*(k*v1_+Q*b))**0.5)/(2*k*v1_)
-                                try:
-                                    if np.isreal(lambda_t_1):
-                                        if lambda_t_1 >1.0:
-                                            lambda_t = lambda_t_1
-                                            lambda_t_list.append(lambda_t/(1+lambda_t))
-                                            continue
-                                    if np.isreal(lambda_t_2):
-                                        if lambda_t_2 >1.0:
-                                            lambda_t = lambda_t_2
-                                            lambda_t_list.append(lambda_t/(1+lambda_t))
-                                            continue
-                                    if np.isreal(lambda_t_3):
-                                        if lambda_t_3 <=1.0 and lambda_t_3>0:
-                                            lambda_t = lambda_t_3
-                                            lambda_t_list.append(lambda_t/(1+lambda_t))
-                                            continue
-                                    if np.isreal(lambda_t_4):
-                                        if lambda_t_4 <=1.0 and lambda_t_4>0:
-                                            lambda_t = lambda_t_4
-                                            lambda_t_list.append(lambda_t/(1+lambda_t))
-                                            continue
-                                    flag = False
-                                    break
-                                except:
-                                    flag = False
-                                    break
-                                lambda_t_list.append(lambda_t/(1+lambda_t))
-            
-                    if flag == True:
-                        zero_count = sum(1 for x in lambda_t_list if x > 0.5)
-                        if zero_count > zero_count_default:
-                            zero_count_default = zero_count
-                            v_optimized = [v1,v2,v3]
-                            lambda_t_list_optimized = lambda_t_list
-                        
-        X = np.array(sigmas)
-
-        Y = np.arange(0,25,1)
-        temp_i = np.array(temp_cond_indices)
-        X, Y = np.meshgrid(X, Y)
-        lambda_t_list_optimized = np.array(lambda_t_list_optimized)
-        lambda_t_list_optimized = lambda_t_list_optimized.reshape([len(sigmas),25])
-
-        lambda_t_list_optimized = torch.tensor(lambda_t_list_optimized)
-        Z= lambda_t_list_optimized
-
-        z_upsampled = F.interpolate(Z.unsqueeze(0).unsqueeze(0), scale_factor=10, mode='bilinear', align_corners=True)
-
-        save_path = os.path.join(save_path,'lambad_'+str(v_optimized[0])+'_'+str(v_optimized[1])+'_'+str(v_optimized[2])+'.png')
-        image_numpy = z_upsampled[0].permute(1, 2, 0).numpy()
-
-        plt.figure()  
-        plt.imshow(image_numpy)  
-        plt.colorbar() 
-        plt.axis('off')  
-
-        plt.savefig(save_path, bbox_inches='tight', pad_inches=0.1)
-        plt.close() 
-        print(v_optimized)
-        return lambda_t_list_optimized
 
 
     
-    # def search_hypers_v2(self, sigmas, masks, save_path, type='double_end'):
     def search_hypers_v2(self,  masks, save_path, type='double_end', diffusion_steps=100):
         '''
             masks: uncertainty masks
@@ -1385,10 +1166,8 @@ class DiffusionGS:
             index_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24] # Note: generate 24 frames
             masks = torch.mean(masks, dim=(-1,-2))
             assert masks.shape[0] == 24
-            # import pdb;pdb.set_trace()
             # masks = torch.clamp(masks/( torch.maximum( masks.max(), torch.full_like(masks.max(), 0.6)) ), 0, 1)
             masks = torch.clamp(masks/( torch.maximum( masks.max(), torch.full_like(masks.max(), 0.5)) ), 0, 1)
-            # masks = torch.clamp(masks/( torch.minimum( masks.max(), torch.full_like(masks.max(), 0.4)) ), 0, 1)
             masks = torch.cat([torch.zeros_like(masks[0:1]), masks], dim=0 )
 
 
@@ -1422,20 +1201,14 @@ class DiffusionGS:
 
        
                     if flag == True:
-                        zero_count = sum(1 for x in lambda_t_list if x > 0.5) # ???? The more rely on the projected image, the better?
+                        zero_count = sum(1 for x in lambda_t_list if x > 0.5) # The more rely on the projected image, the better
                         if zero_count > zero_count_default:
                             zero_count_default = zero_count
                             v_optimized = [v1,v2,v3]
                             lambda_t_list_optimized = lambda_t_list
                     
-        # X = np.array(sigmas)
-
-        # Y = np.arange(0,25,1)
-        # temp_i = np.array(temp_cond_indices)
-        # X, Y = np.meshgrid(X, Y)
 
         lambda_t_list_optimized = np.array(lambda_t_list_optimized)
-        # lambda_t_list_optimized = lambda_t_list_optimized.reshape([len(sigmas),25])
         lambda_t_list_optimized = lambda_t_list_optimized.reshape([diffusion_steps,25])
 
         lambda_t_list_optimized = torch.tensor(lambda_t_list_optimized)
@@ -1684,7 +1457,6 @@ class DiffusionGS:
                                     torch.tensor(depth[None], device='cuda'), 
                                     depth_pseudo=torch.tensor(rendered_depth_t[None], device='cuda'), 
                                     pose1=torch.tensor(pose_s, device='cuda', dtype=torch.float32), pose2=torch.tensor(pose_t, device='cuda', dtype=torch.float32), K=torch.tensor(intrinsics, device='cuda', dtype=torch.float32), )
-            # warped_frame2, mask2,flow12= forward_warp(image, None, depth, pose_s, pose_t, intrinsics, None)
             # mask2 = warp_dict['mask'].cpu().numpy()
             # mask2 = warp_dict['mask_depth_strict'].cpu().numpy()
             mask2 = warp_dict['mask_reproj'].cpu().numpy()
@@ -1930,9 +1702,7 @@ class DiffusionGS:
             # if self.num_input_views > 20:
             #     down_sample_rate = 300/self.num_input_views*25 # 300 is the max number of interpolated views 
 
-            # dense_views, dense_poses = self.densify_views(cycle_num=i,down_sample_rate=down_sample_rate, densify_type=self.densify_type)
             dense_views, dense_poses, dense_pcds = self.densify_views(cycle_num=i,down_sample_rate=down_sample_rate, densify_type=self.densify_type, num_views_for_pcd_densification=self.args.num_views_for_pcd_densification)
-            # dense_views, dense_poses, correp_masks = self.densify_views(cycle_num=i,down_sample_rate=down_sample_rate, densify_type=self.densify_type)
 
             # self.generate_corresp_mask(gs_images, dense_views )
             # self.gsTrainer.reset_gaussians_from_pcd(dense_pcds)
@@ -1944,21 +1714,12 @@ class DiffusionGS:
 
 
             self.gsTrainer.opt.use_lpips_loss = True
-            # self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=0.01, load_iteration=-2) # for debug: load colmap's pcd 
-            # self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=0.99, load_iteration=-2, pseudo_cam_sampling_rate=0.04) # for debug: load colmap's pcd 
-            # self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=0.1, load_iteration=-2, pseudo_cam_sampling_rate=0.04) # for debug: load colmap's pcd 
-            # self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=self.cam_confidence, load_iteration=-2, pseudo_cam_sampling_rate=self.pseudo_cam_sampling_rate) # for debug: load colmap's pcd 
+
             if i == 0:
                 self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=self.cam_confidence, load_iteration=None, pseudo_cam_sampling_rate=self.pseudo_cam_sampling_rate, load_ckpt=False) # not use previsous gaussians, use the densified pcds
             else:
                 self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=self.cam_confidence, load_iteration=None, pseudo_cam_sampling_rate=self.pseudo_cam_sampling_rate, load_ckpt=True) # use previsous gaussians
 
             self.gsTrainer.opt.use_lpips_loss = False
-        # '''
 
-        self.refine_epoch = 1001 #1000
 
-        # self.gsTrainer.opt.densify_abs_grad_threshold = 20000#0.2
-        # self.gsTrainer.opt.densify_grad_threshold = 0.0008#0.0005
-        self.gsTrainer.opt.use_lpips_loss = True
-        # self.refine_GS(dense_views=dense_views, dense_poses=dense_poses, intrinsics=self.gs_intrinsics, cam_confidence=self.cam_confidence, load_iteration=None, pseudo_cam_sampling_rate=self.pseudo_cam_sampling_rate, load_ckpt=True) # disable densification for the last refine cycle: load the last refined GS

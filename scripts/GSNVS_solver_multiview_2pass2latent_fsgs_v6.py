@@ -89,7 +89,7 @@ if __name__ == "__main__":
         epoch_iteration = gsTrainer.opt.iterations
     except:
         raise
-        print("Failed to initialize GS scene. If you are debugging that is okay. Otherwise, check the error message above.")
+        print("Failed to initialize GS scene. If you are debugging, it's okay. Otherwise, check the error message above.")
 
     from model.diffusionGS_v3_6 import DiffusionGS
     # from model.diffusionGS_v3_5 import DiffusionGS

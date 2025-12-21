@@ -1,6 +1,10 @@
 
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS2/FSGS/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
 
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/FSGS":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/gmflow":$PYTHONPATH
+export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/dust3r":$PYTHONPATH
 
 dataset_root="/home/yxumich/durable/datasets/nerf_llff_data/"
 workspace=$1
