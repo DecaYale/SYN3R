@@ -31,7 +31,7 @@ for seq_name in $(ls $dataset_root); do
     GS_args="-s ${dataset_root}/${seq_name} --model_path ${workspace}/${seq_name}  --eval  --n_views 3  --sample_svd_pseudo_interval 1  
         --num_train_samples 3 --images images --resolution 4 --lambda_dssim 0.5 
         "
-    python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v6.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertain" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_loop0_gs"  --dataset "dtu" --refine_cycle_num 2 $GS_args  | tee ${workspace}/${seq_name}/log.txt 2>&1
+    python scripts/train.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertain" --interp_type "backward_warp" --cam_confidence 0.05 --pseudo_cam_sampling_rate 0.02 --densify_type "interpolate_loop0_gs"  --dataset "dtu" --refine_cycle_num 2 $GS_args  | tee ${workspace}/${seq_name}/log.txt 2>&1
 
     idx=$((idx+1))
 

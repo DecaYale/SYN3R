@@ -1,7 +1,5 @@
 
 # support FSGS 
-#  using GS rendering to densify views
-#based on diffusionGS_v3_4
 # add view selection in view densification process 
 
 import numpy as np 
@@ -25,7 +23,7 @@ import open3d as o3d
 
 
 from FSGS.utils.trainer import init_GSTrainer, GSTrainer
-from model.SVD_2pass import export_to_video
+# from model.SVD_2pass import export_to_video
 from solver_utils.forward_warp import forward_warp, inverse_warp
 
 from FSGS.scene.cameras import Camera
@@ -42,6 +40,7 @@ class DiffusionGS:
         self.args = input_args    
         self.cam_confidence = self.args.cam_confidence 
         self.pseudo_cam_sampling_rate = self.args.pseudo_cam_sampling_rate
+        self.fps_keyframe_sampling = self.args.fps_keyframe_sampling
 
         self.debug = debug
 
@@ -181,7 +180,7 @@ class DiffusionGS:
         # assert densify_type in ['interpolate', 'from_single', 'from_single_gs', 'interpolate_gs']
 
 
-        def view_selection_for_dust3r(poses, pose_num, alpha=1.0, beta=1.0):
+        def view_selection_for_pcd_densification(poses, pose_num, alpha=1.0, beta=1.0):
             # poses: list of (4,4) np.ndarray, w2c
             # pose_num: int, number of poses to select
             # Do furthest pose samplling based on the pose distance metric 1-\text{CovisibilityScore} = 1-\exp(-\alpha ||\mathbf{t}_1-\mathbf{t}_2 ||) \exp(-\beta \arccos(\frac{\mathbf{v}_1 \cdot \mathbf{v}_2}{||\mathbf{v}_1||~ ||\mathbf{v}_2|| }) ) 
@@ -212,7 +211,8 @@ class DiffusionGS:
                 min_dists[selected] = -np.inf  # Exclude already selected
                 next_idx = np.argmax(min_dists)
                 selected.append(next_idx)
-            return [poses[i] for i in selected]
+            # return [poses[i] for i in selected]
+            return selected
 
 
 
@@ -258,7 +258,6 @@ class DiffusionGS:
                     raise NotImplementedError(f"{densify_type} not supported")
 
             
-                # if down_sample_rate > 1:
                 if down_sample_rate <1:
                     # diffused_frames = [diffused_frames[i] for i in range(0, len(diffused_frames), down_sample_rate)]
                     # interpolated_poses = [interpolated_poses[i] for i in range(0, len(interpolated_poses), down_sample_rate)]
@@ -274,7 +273,15 @@ class DiffusionGS:
             dense_views.extend(diffused_frames[:-1])
             dense_poses.extend(interpolated_poses[:-1])  
             # assert num_views_for_pcd_densification>1
-            key_inds = np.linspace(0, len(diffused_frames)-1, num_views_for_pcd_densification, dtype=int)
+
+            if self.fps_keyframe_sampling:
+                # import pdb; pdb.set_trace()
+                key_inds = view_selection_for_pcd_densification(interpolated_poses, num_views_for_pcd_densification, alpha=1.0, beta=1.0)
+                key_inds.sort()
+            else:   
+
+                key_inds = np.linspace(0, len(diffused_frames)-1, num_views_for_pcd_densification, dtype=int)
+
             key_inds = key_inds[:-1]
             template = np.zeros(len(diffused_frames)-1, dtype=bool)
             template[key_inds] = True
@@ -296,7 +303,6 @@ class DiffusionGS:
             torch.save( {'views':diffused_frames, 'poses':interpolated_poses}, saving_path, )
 
         #densify point clouds
-        
         if num_views_for_pcd_densification > 1:
 
             trimesh_scene = self.densify_pcds([ dense_views[i] for i in np.nonzero(key_frame_mask)[0] ], 
@@ -341,10 +347,12 @@ class DiffusionGS:
         return dense_views, dense_poses, dense_pcds#, corresp_masks 
 
 
+
     def densify_pcds(self, diffused_frames, interpolated_poses, key_frame_mask=None, input_flags=None, win_samples=-1):
         '''
             interpolated_poses: the poses of the diffused frames, w2c 
         '''
+
 
         assert len(diffused_frames) == len(interpolated_poses)# == 25
         if key_frame_mask is not None:
@@ -354,6 +362,8 @@ class DiffusionGS:
             diffused_frames = [im.permute([1,2,0]).cpu().numpy()*255 for im in diffused_frames]
 
         num_frames = len(diffused_frames)
+
+        
 
         #filter out noisy frames
         filtered_diffused_frames = []

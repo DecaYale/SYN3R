@@ -15,9 +15,7 @@ dataset_root="/home/yxumich/Works2/DATASETS/DL3DV/test_split/"
 # dataset_root="/home/yxumich/durable2/datasets/DL3DV/test_split"
 
 workspace=$1
-# export CUDA_VISIBLE_DEVICES=$3
-n_views=$2 #15
-# view_dir="colmap_${n_views}view"
+n_views=$2 
 # view_dir="colmap_15view"
 view_dir="colmap_dense"
 
@@ -61,9 +59,6 @@ seq=(
 # ef229e255aee1a17530135a934f5fdc4e00aec8b0771cfd0dc183581e508da69
 # efdf19ca82bba7bccc73f64273405d077abd61dd2f5339a0a642bc75d7d900ec
 )
-# ("room" "fortress" "flower" "fortress" "room" "trex" "horns" "flower")  
-# for seq_name in $(ls $dataset_root); do
-# Reversed list
 reversed=()
 
 # Loop from end to start
@@ -88,7 +83,7 @@ for seq_name in "${seq[@]}"; do
     GS_args="-s ${dataset_root}/${seq_name}/${view_dir} --model_path ${workspace}/${seq_name}  --eval  --n_views $n_views --sample_svd_pseudo_interval 1
         --num_train_samples $n_views --images images_4 --resolution 1 --use_proximity_densify 0 --densify_grad_threshold 0.0002  --percent_dense 0.001  --svd_depth_warmup 1 --use_dust3r 0 --rand_pcd  --start_sample_svd_frame 2000 
         "
-    python scripts/GSNVS_solver_multiview_2pass2latent_fsgs_v6.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertainPost" --interp_type "backward_warp" --cam_confidence 0.2 --pseudo_cam_sampling_rate 0.02  --densify_type "interpolate_gs_v2"  --dataset "dl3dv" --lpips_weight 1 --svd_l1_weight 0 --refine_cycle_num 2 $GS_args  | tee ${workspace}/${seq_name}/log.txt 2>&1
+    python scripts/train.py  --iteration dgs1  --weight_clamp 0.2 --diffusion_type "2PassProbUncertainPost" --interp_type "backward_warp" --cam_confidence 0.2 --pseudo_cam_sampling_rate 0.02  --densify_type "interpolate_gs_v2"  --dataset "dl3dv" --lpips_weight 1 --svd_l1_weight 0 --refine_cycle_num 2 --fps_keyframe_sampling 1 $GS_args  | tee ${workspace}/${seq_name}/log.txt 2>&1
     
 
     idx=$((idx+1))

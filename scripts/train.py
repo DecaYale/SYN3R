@@ -47,10 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6007)
     parser.add_argument('--debug_from', type=int, default=-100)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    # parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
-    # parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
-    # parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[30_000])
     parser.add_argument("--start_checkpoint", type=str, default = None)
     parser.add_argument("--diffusion_type", type=str, default ='2Pass')
     parser.add_argument("--interp_type", type=str, default ='forward_warp', choices=['forward_warp', 'backward_warp'])
@@ -59,18 +56,17 @@ if __name__ == "__main__":
     parser.add_argument("--pseudo_cam_sampling_rate", type=float, default=0.04)
 
 
-    # parser.add_argument("--test_iterations", nargs="+", type=int, default=[10_00, 20_00, 30_00, 50_00, 10_000])
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[ 50_00, 10_000])
     parser.add_argument("--save_iterations", nargs="+", type=int, default=[50_00, 10_000])
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[80_00, 10_000])
     parser.add_argument("--train_bg", action="store_true")
-    # parser.add_argument("--use_proximity_densify", type=bool, default=True)
     parser.add_argument("--densify_type", type=str, default ='interpolate', choices=['interpolate', 'from_single', 'from_single_gs', 'interpolate_gs', 'interpolate_loop0_gs', 'interpolate_gs_v2'])
     parser.add_argument("--dataset", type=str, default ='llff', choices=['llff', 'dtu', 'dl3dv'])
     parser.add_argument("--refine_cycle_num", type=int, default =1)
 
     parser.add_argument("--reorg_train_views", type=int, default =1)
     parser.add_argument("--num_views_for_pcd_densification", type=int, default=4)
+    parser.add_argument("--fps_keyframe_sampling", type=int, default=0, help="If >0, use FPS for keyframe selection during PCD densification")
 
     args = parser.parse_args(sys.argv[1:])
     print(args.folder_path)
@@ -91,8 +87,7 @@ if __name__ == "__main__":
         raise
         print("Failed to initialize GS scene. If you are debugging, it's okay. Otherwise, check the error message above.")
 
-    from model.diffusionGS_v3_6 import DiffusionGS
-    # from model.diffusionGS_v3_5 import DiffusionGS
+    from model.diffusionGS import DiffusionGS
     runner = DiffusionGS(gsTrainer, num_input_views=args.num_train_samples, diffusion_type=args.diffusion_type, save_dir=args.model_path, interp_type=args.interp_type, input_args=args)
     # runner = DiffusionGS(gsTrainer, num_input_views=args.num_train_samples, diffusion_type='2Pass', save_dir=args.model_path, debug=True)
 

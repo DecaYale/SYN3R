@@ -15,7 +15,7 @@ n_views=$2 #15
 view_dir="colmap_${n_views}view"
 if [ $n_views != 15 ] && [ $n_views != 24 ]; then
     echo "Invalid n_views"
-    view_dir="colmap_15view"
+    view_dir="colmap_dense"
 fi
 
 idx=0
@@ -34,10 +34,10 @@ for seq_name in $(ls $dataset_root); do
     # for chkpt in $(ls ${workspace}/${seq_name} | grep "chkpnt"); do
     for chkpt in $(ls ${workspace}/${seq_name} | grep "chkpnt10000"); do
         echo "Processing $seq_name $chkpt"
-        python FSGS/render.py -s ${dataset_root}/${seq_name}/${view_dir}  --model_path ${workspace}/${seq_name} --checkpoint $chkpt  --eval #-r 8 --near 10 
+        python thirdparty/FSGS/render.py -s ${dataset_root}/${seq_name}/${view_dir}  --model_path ${workspace}/${seq_name} --checkpoint $chkpt  --eval #-r 8 --near 10 
     done
 
-    python FSGS/metrics.py --source_path $dataset_root/${seq_name}  --model_path  ${workspace}/${seq_name} > ${workspace}/${seq_name}/eval_res.txt 
+    python thirdparty/FSGS/metrics.py --source_path $dataset_root/${seq_name}  --model_path  ${workspace}/${seq_name} > ${workspace}/${seq_name}/eval_res.txt 
 
 
     idx=$((idx+1))
