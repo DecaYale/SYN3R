@@ -562,10 +562,7 @@ class StableVideoDiffusionPipeline(DiffusionPipeline):
             image_latents = image_latents.to(dtype)
     
             # Repeat the image latents for each frame so we can concatenate them with the noise
-            # image_latents [batch, channels, height, width] ->[batch, num_frames, channels, height, width]
-            # image_latents = image_latents.unsqueeze(1).repeat(1,num_frames,1,1,1) #torch.Size([2, 25, 4, 72, 128])
             image_latents = rearrange(image_latents, "(b f) c h w -> b f c h w",f=1)
-            # image_latents = image_latents.repeat(1, num_frames, 1, 1, 1) 
             return image_latents
         
         
@@ -576,31 +573,21 @@ class StableVideoDiffusionPipeline(DiffusionPipeline):
         needs_upcasting = self.vae.dtype == torch.float16 and self.vae.config.force_upcast
         if needs_upcasting:
             self.vae.to(dtype=torch.float32)
-        # image_latents = self._encode_vae_image(image[0:1,:,:,:], device, num_videos_per_prompt, do_classifier_free_guidance) # [2, 4, 72, 128]
-        # image_latente = self._encode_vae_image(image_end[0:1,:,:,:], device, num_videos_per_prompt, do_classifier_free_guidance) # [2, 4, 72, 128] #added by dy 
 
         image_latent_start = image_to_image_latents(image[0:1,:,:,:], noise)
         image_latent_end = image_to_image_latents(image_end[0:1,:,:,:], noise)
 
         temp_cond_latents_list = []
         for i in range(temp_cond.shape[0]):
-            # temp_cond_latents_ = self._encode_vae_image(temp_cond[i:i+1,:,:,:], device, num_videos_per_prompt, do_classifier_free_guidance) # [12, 4, 72, 128]
-            # temp_cond_latents_ = rearrange(temp_cond_latents_, "(b f) c h w -> b f c h w",b=2)
             temp_cond_latents_ = image_to_image_latents(temp_cond[i:i+1,:,:,:], noise, dtype=torch.float32)
             temp_cond_latents_list.append(temp_cond_latents_)
         temp_cond_latents = torch.cat(temp_cond_latents_list,dim=1)
 
-        # image_latents = rearrange(image_latents, "(b f) c h w -> b f c h w",f=1)
-        # image_latente = rearrange(image_latente, "(b f) c h w -> b f c h w",f=1)
 
         temp_cond_latents  = torch.cat((image_latent_start,temp_cond_latents),dim=1)
         
-        # image_latents = image_latents.to(image_embeddings.dtype)
-        # image_latents = image_latents.repeat(1, num_frames, 1, 1, 1)
         image_latent_start = image_latent_start.repeat(1, num_frames, 1, 1, 1)
 
-        # image_latente = image_latente.to(image_embeddings.dtype)
-        # image_latente = image_latente.repeat(1, num_frames, 1, 1, 1)
         image_latent_end = image_latent_end.repeat(1, num_frames, 1, 1, 1)
 
 
@@ -651,21 +638,8 @@ class StableVideoDiffusionPipeline(DiffusionPipeline):
             ) # Note: gaussian noise ###1 
             latent_list.append(latents)
 
-        # latents2 = self.prepare_latents(
-        #     batch_size * num_videos_per_prompt,
-        #     num_frames,
-        #     num_channels_latents,
-        #     height,
-        #     width,
-        #     image_embeddings.dtype,
-        #     device,
-        #     generator,
-        #     latents,
-        # ) # Note: gaussian noise ###1 
 
-        # latent_list=[latents, latents2]
 
-        # latents = latents.flip(dims=[1]) #????  for debugging
 
 
         # 7. Prepare guidance scale
@@ -738,8 +712,6 @@ class StableVideoDiffusionPipeline(DiffusionPipeline):
                 
 
                             # compute the previous noisy sample x_t -> x_t-1
-                            # next_latents = self.scheduler.step_multi_dgs_prob(noise_pred, t, latents__, temp_cond_latents__, mask__, lambda_ts__,step_i=i).prev_sample #no big difference from step_single_dgs, the lambda_ts controls the merging ratio of the ref image and cond image.  #NOTE:!!!!!
-                            # next_latents = self.scheduler.step_multi_dgs_prob_uncertain(noise_pred, t, latents__, temp_cond_latents__, mask__, lambda_ts__,step_i=i).prev_sample #no big difference from step_single_dgs, the lambda_ts controls the merging ratio of the ref image and cond image.  #NOTE:!!!!!
                             next_latents = self.scheduler.step_interp_prob_uncertain(noise_pred, t, latents__, temp_cond_latents__, mask__, lambda_ts__,step_i=i).prev_sample #no big difference from step_single_dgs, the lambda_ts controls the merging ratio of the ref image and cond image.  #NOTE:!!!!!
                 
 
@@ -763,7 +735,6 @@ class StableVideoDiffusionPipeline(DiffusionPipeline):
 
                         latents = weight_fw * latents_fb[0]+ (1-weight_fw) * latents_fb[1].flip(dims=[1])  # flip the backward latents to make it consistent with the forward latents
                         latent_list[latent_idx] = latents
-                    # latents = weight_fw * latents_fb[1]+ (1-weight_fw) * latents_fb[0].flip(dims=[1])  # flip the backward latents to make it consistent with the forward latents
                     
                     latents = 0 
                     for latent_i in latent_list:
