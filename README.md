@@ -1,7 +1,11 @@
-# SV$^2$CGS: Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion
+<!-- # SV$$^2$$CGS: Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion -->
+<!-- # ![equation](https://latex.codecogs.com/gif.image?\dpi{200}\mathbf{\mathrm{SV^2CGS}}): Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion  -->
+# SYN3R: Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion 
+<!-- **S**parse **V**iew Novel View Synthesis via Test-Time Natural **V**ideo **C**ompletion with 3D Gaussian Splatting.  -->
 
 <!-- Sparse View Gaussian Splatting via Video Completion -->
-
+<!-- SYN3R Synthesis with Natural Video Regularization -->
+\* The name SYN3R is an abbrevation for "Novel View **Syn**thesis with Natural Video **3**D-aware **R**egularization"
 
 [//]: # (###  [Project]&#40;https://decayale.github.io/project/SV2CGS/&#41; | [Arxiv]&#40;https://arxiv.org/abs/2312.00451&#41;)
 
