@@ -29,6 +29,8 @@ from solver_utils.forward_warp import forward_warp, inverse_warp
 from FSGS.scene.cameras import Camera
 # from model.correspondence import MASt3RInference
 from functools import partial
+from diffusers.utils import load_image, export_to_video
+
 
 
 
@@ -236,14 +238,9 @@ class DiffusionGS:
             else:
                 # if densify_type == 'interpolate':
                 #     diffused_frames, interpolated_poses = self._interpolate_between(i, (i+1)%self.num_input_views, replace=True)
-                # elif densify_type == 'from_single':
-                    
-                #     diffused_frames, interpolated_poses = self._extrapolate_from(i, replace=True)
                 # elif densify_type == 'from_single_gs':
                 #     diffused_frames, interpolated_poses = self._extrapolate_from_gs(i, replace=True)
                 #     pass
-                # elif densify_type == 'interpolate_gs':
-                #     diffused_frames, interpolated_poses = self._interpolate_between_gs(i, (i+1)%self.num_input_views, replace=True)
                 if densify_type == 'interpolate_loop0_gs':
                     if i==self.num_input_views-1:
                         break
@@ -275,7 +272,6 @@ class DiffusionGS:
             # assert num_views_for_pcd_densification>1
 
             if self.fps_keyframe_sampling:
-                # import pdb; pdb.set_trace()
                 key_inds = view_selection_for_pcd_densification(interpolated_poses, num_views_for_pcd_densification, alpha=1.0, beta=1.0)
                 key_inds.sort()
             else:   
@@ -430,9 +426,7 @@ class DiffusionGS:
         '''        
 
 
-        # import pdb; pdb.set_trace()
 
-        # pairs_key_frames = self.dust3r.make_pairs([filtered_diffused_frames[i] for i in filtered_key_frame_inds], scene_graph='complete', global_image_inds=filtered_key_frame_inds) 
 
         scene, trimesh_scene = self.dust3r.run(filtered_diffused_frames, c2w_poses=filtered_interpolated_poses, intrinsics=filtered_intrinsics_list, preset_pairs=pairs_key_frames)
         self.dust3r.to('cpu')
@@ -531,7 +525,6 @@ class DiffusionGS:
         # import pdb; pdb.set_trace()  # check the shape and type of pseudo_images
         # image_o = pseudo_images[0]
         def get_intensity_confidence(warpped_image, pseudo_image, uncertainty_mask, sigma=0.1):
-            # import pdb; pdb.set_trace()
             warpped_image [uncertainty_mask.astype(bool)] == 0
             pseudo_image[uncertainty_mask.astype(bool)] == 0
 
@@ -547,7 +540,6 @@ class DiffusionGS:
             soft_masks_reproj_ori = aux['soft_masks_reproj_ori']    
             # cond_image = np.stack(pseudo_images[1:])
             
-            # import pdb; pdb.set_trace() 
             #integrate the uncertainties based on intensity and geometry 
             # cond_image= np.stack(cond_image)
             cond_image = np.stack(aux['cond_images_ori'])
@@ -802,12 +794,10 @@ class DiffusionGS:
         
 
         # render images from GS
-        # for pseudo_cam in nearest_pseudo_cams:
         pseudo_images = []
         pseudo_depths = []
         # pseudo_images_gs = []
         for pseudo_pose in interpolated_poses:
-            # render_res = self.gsTrainer.render_view(pseudo_cam)
             
             _, pseudo_image, pseudo_depth = self.render_GS(pose=pseudo_pose)
             # pseudo_images_gs.append(pseudo_image.transpose[1,2,0])
@@ -863,8 +853,6 @@ class DiffusionGS:
                 mask_erosion = mask_erosion.reshape(72,8,128,8).transpose(0,2,1,3).reshape(72,128,64)
                 mask_erosion = np.mean(mask_erosion,axis=2)
                 mask_buf.append(mask_erosion)
-                # mask_erosion[mask_erosion < 0.2] = 0
-                # mask_erosion[mask_erosion >= 0.2] = 1
             masks = np.stack(mask_buf)
             masks = torch.from_numpy(masks).float()
 
@@ -904,15 +892,12 @@ class DiffusionGS:
 
 
 
-        # sigma_list = np.load('sigmas/sigmas_100.npy').tolist()
-        # lambda_ts = self.search_hypers_v2(sigma_list, masks, save_path, type='double_end') 
         lambda_ts = self.search_hypers_v2(masks, save_path, type='double_end') 
 
         output_path = os.path.join(self.save_dir, 'render_warp_images')
         os.makedirs(output_path, exist_ok=True)
 
         #for saving gpu memory
-        # import pdb; pdb.set_trace()
         self.gsTrainer.gaussians.to(device='cpu')
         torch.cuda.empty_cache()
 
@@ -960,7 +945,6 @@ class DiffusionGS:
             pseudo_images.append( cv2.resize(pseudo_image.transpose([1,2,0]), dsize=(self.diffusion_width, self.diffusion_height), interpolation=cv2.INTER_LINEAR ) )
 
 
-
         save_path = os.path.join(self.save_dir, 'warp_images')
         os.makedirs(save_path, exist_ok=True)
 
@@ -988,14 +972,11 @@ class DiffusionGS:
             # cond_image = np.stack(pseudo_images[1:])
             
             #integrate the uncertainties based on intensity and geometry 
-            # cond_image= np.stack(cond_image)
-            # cond_image = np.stack(aux['cond_images_ori'])
             cond_image_ori = np.stack(aux['cond_images_ori'])
 
 
             gs_images= np.stack(pseudo_images[1:-1])
             intensity_conf = get_intensity_confidence(cond_image_ori, gs_images, 1-(cond_image_ori>0), sigma=0.5)
-            # intensity_conf = get_intensity_confidence(cond_image, gs_images, 1-(cond_image>0), sigma=0.5)
 
             geo_inten_conf = (intensity_conf) * (1-soft_masks_reproj_ori[...,None])
             # geo_inten_conf = (1-soft_masks_reproj_ori[...,None]) # 24.2
@@ -1054,9 +1035,6 @@ class DiffusionGS:
 
         diffused_frames = [torch.from_numpy(np.asarray(fr)).permute([2,0,1])/255. for fr in diffused_frames]   # HWC->CHW
 
-        # if replace:
-        #     diffused_frames[0] = torch.from_numpy(np.asarray(image_o)).permute([2,0,1]).cuda()  #HWC-CHW
-        #     diffused_frames[-1] = torch.from_numpy(np.asarray(image_o2)).permute([2,0,1]).cuda() 
 
         return diffused_frames, interpolated_poses
 
@@ -1103,10 +1081,6 @@ class DiffusionGS:
 
         diffused_frames = [torch.from_numpy(np.asarray(fr)).permute([2,0,1])/255. for fr in diffused_frames]   # HWC->CHW
 
-        # if replace:
-        #     diffused_frames[0] = torch.from_numpy(np.asarray(image_o)).permute([2,0,1]).cuda()  #HWC-CHW
-        #     diffused_frames[-1] = torch.from_numpy(np.asarray(image_o2)).permute([2,0,1]).cuda() 
-
     
 
         return diffused_frames, interpolated_poses
@@ -1114,8 +1088,6 @@ class DiffusionGS:
     def svd_render(self, image_l, image_r, masks, cond_image,output_path,lambda_ts, num_frames=25, save_prefix=''):
         pipe = self.diffusion_pipeline.from_pretrained("stabilityai/stable-video-diffusion-img2vid-xt", torch_dtype=torch.float16, variant="fp16")
         pipe.to("cuda")
-        # pipe = self.diffusion_pipeline
-        # pipe.to("cuda")
 
 
         if self.densify_type in ['from_single', 'from_single_gs']:
@@ -1580,14 +1552,6 @@ class DiffusionGS:
         masks = []
         # for i in range(23):
         for i in range(interp_num):
-            # if i<12:
-            #     depth = depth_l
-            #     pose_s = pose_s_l
-            #     image = image_l
-            # else:
-            #     depth = depth_r
-            #     pose_s = pose_s_r
-            #     image = image_r
             if image_r is not None:
                 if i<12:
                     depth = depth_l
