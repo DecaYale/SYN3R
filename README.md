@@ -5,7 +5,7 @@
 
 <!-- Sparse View Gaussian Splatting via Video Completion -->
 <!-- SYN3R Synthesis with Natural Video Regularization -->
-\* The name SYN3R is an abbrevation for "Novel View **Syn**thesis with Natural Video **3**D-aware **R**egularization"
+\* The name SYN3R is an abbreviation for "Novel View **Syn**thesis with Natural Video **3**D-aware **R**egularization"
 
 [//]: # (###  [Project]&#40;https://decayale.github.io/project/SV2CGS/&#41; | [Arxiv]&#40;https://arxiv.org/abs/2312.00451&#41;)
 
@@ -149,12 +149,10 @@ If you find our work useful for your project, please consider citing the followi
 
 
 ```
-@misc{xu2025SV2CGS, 
-title={Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion}, 
-author={Yan Xu and Yixing Wang and Stella X. Yu}, 
-year={2025},
-eprint={},
-archivePrefix={arXiv},
-primaryClass={cs.CV} 
+@inproceedings{xu2025novel,
+        title={Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion},
+        author={Xu, Yan and Wang, Yixing and Yu, Stella X},
+        booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems}
+        year={2025}
 }
 ```
