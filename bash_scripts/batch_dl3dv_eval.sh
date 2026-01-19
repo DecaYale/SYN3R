@@ -1,17 +1,20 @@
 
-# export PYTHONPATH="/home/yxumich/Projects/FSGS/":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
+# YOU NEED TO MODIFY THE PATHS IN THE SCRIPT BELOW BEFORE RUNNING IT
+PROJECT_DIR=/home/yxumich/Projects/SYN3R/
+DATA_DIR=/home/yxumich/Works2/DATASETS/
 
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/FSGS":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/gmflow":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/dust3r":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}":$PYTHONPATH
+
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/FSGS":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/gmflow":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/dust3r":$PYTHONPATH
 
 
-dataset_root="/home/yxumich/Works2/DATASETS/DL3DV/test_split/"
+dataset_root="${DATA_DIR}/DL3DV/test_split/"
 
 workspace=$1
-n_views=$2 #15
+n_views=$2 #9
 view_dir="colmap_${n_views}view"
 if [ $n_views != 15 ] && [ $n_views != 24 ]; then
     echo "Invalid n_views"

@@ -1,12 +1,19 @@
 
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/":$PYTHONPATH
+# YOU NEED TO MODIFY THE PROJECT_DIR IN THE SCRIPT BELOW BEFORE RUNNING IT
+PROJECT_DIR=/home/yxumich/Projects/SYN3R/
+DATA_DIR=/home/yxumich/durable/datasets/
 
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/FSGS":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/gmflow":$PYTHONPATH
-export PYTHONPATH="/home/yxumich/Projects/SV2C_GS/thirdparty/dust3r":$PYTHONPATH
 
-dataset_root="/home/yxumich/durable/datasets/nerf_llff_data/"
+
+export PYTHONPATH="${PROJECT_DIR}":$PYTHONPATH
+
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/FSGS":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/gmflow":$PYTHONPATH
+export PYTHONPATH="${PROJECT_DIR}/thirdparty/dust3r":$PYTHONPATH
+
+dataset_root="${DATA_DIR}/nerf_llff_data/"
+
 workspace=$1
 
 

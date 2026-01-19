@@ -1631,7 +1631,7 @@ class DiffusionGS:
         self.gsTrainer.update_cameras(dense_views, dense_poses, intrinsics, cam_confidences=cam_confidence, append=True, load_iteration=load_iteration) # append the interpolated views to GS cameras 
         # self.gsTrainer.reset_scene()
 
-        self.gsTrainer.reset_optimizers() # reset the optimizers for the new GS cameras ????
+        self.gsTrainer.reset_optimizers() # reset the optimizers for the new GS cameras 
         self.gsTrainer.reset_gs() ###for debug 
 
         # epoch_iteration = self.gsTrainer.opt.iterations

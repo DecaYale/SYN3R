@@ -71,7 +71,7 @@ We may use all the frames for SfM but would train 3D Gaussian Splatting with spa
 ``` bash
 # Step 1: download processed datasets from https://huggingface.co/datasets/decayale/SV2CGS_DATA/tree/main 
 
-# Step 2:  unzip the data to a target position
+# Step 2:  unzip the data to a target position we refer to as DATA_DIR in the scripts
 
 unzip nerf_llff_data.zip 
 
@@ -93,21 +93,21 @@ python3 tools/colmap_llff.py
 Train on LLFF dataset with 3 views
 
 ```bash 
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_llff_train.sh output/llff/
 ``` 
 
 Train on DTU dataset with 3 views
 
 ```bash 
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_dtu_train.sh output/dtu/
 ``` 
 
 Train on DL3DV dataset with 9 views
 
 ```bash 
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_dl3dv_train.sh output/dl3dv/ 9 
 ``` 
 
@@ -118,19 +118,19 @@ Run the following script to render and evaluate the images.
 Evaluate on LLFF dataset
 
 ```bash
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_llff_eval.sh output/llff/
 ```
 
 Evaluate on DTU dataset
 ```bash
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_dtu_eval.sh output/dtu/
 ```
 
 Evaluate on DL3DV dataset
 ```bash
-# modify the variable $dataset_root according to the location where you unzipped the data before running the script
+# modify the variable $PROJECT_DIR and $DATA_DIR according to the locations where your project and your data are before running the script
 bash bash_scripts/batch_dl3dv_eval.sh output/dl3dv/
 ```
 
