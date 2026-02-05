@@ -29,9 +29,9 @@
 ## Clone the Code
 
 ```
-git clone https://github.com/DecaYale/SV2C_GS.git 
+git clone https://github.com/DecaYale/SYN3R.git
 
-cd SV2C_GS 
+cd SYN3R 
 git submodule update --init --recursive
 
 ```
