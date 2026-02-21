@@ -62,6 +62,14 @@ export CPATH=$PATH_TO_CONDA_ENV/include/
 pip install -e ".[torch]"
 ```
 <!-- **CUDA 11.7** is strongly recommended. -->
+### Download the Thirdparty Pretrained Models
+
+Before runing our code, you need to download the pretrained GMFlow [models](https://drive.google.com/file/d/1d5C5cgHIxWGsFR1vYs5XrQbbUiZl9TX2/view) and Dust3R [models](https://github.com/naver/dust3r). The downloaded model should be put in a folder called "pretrained" in the directory of this project, as we hardcode this part in our code:
+```python
+#in train_v4.py
+self.gmflow = GMFlowInference(model_name='pretrained/gmflow_sintel-0c07dcb3.pth') 
+self.dust3r = Dust3RInference(weights_path='pretrained/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth', )
+```
 
 ## Data Preparation
 In data preparation step, we download the official datasets and estimate the camera poses with SfM or transform the provided camera parameters to be compatible with 3D Gaussian Splatting.
